@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: MiniHub API
   version: 1.0.0
-  description: MiniHub API Gateway - Bookmark and Collection Management Service
+  description: API Gateway для сервиса закладок и заметок
 
 servers:
   - url: http://localhost:8080/api
@@ -13,7 +13,8 @@ servers:
 paths:
   /auth/register:
     post:
-      summary: Register a new user
+      summary: Регистрация нового пользователя
+      description: Создание нового аккаунта пользователя
       tags:
         - Auth
       requestBody:
@@ -24,19 +25,20 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
         '200':
-          description: User registered successfully
+          description: Успешная регистрация
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Invalid request or user already exists
+          description: Некорректный запрос или пользователь уже существует
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /auth/login:
     post:
-      summary: Login user
+      summary: Вход пользователя
+      description: Аутентификация существующего пользователя
       tags:
         - Auth
       requestBody:
@@ -47,21 +49,22 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login successful
+          description: Успешный вход
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Invalid credentials
+          description: Неверные учетные данные
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /auth/refresh:
     post:
-      summary: Refresh authentication token
+      summary: Обновление access token
+      description: Получение нового access token через refresh token
       tags:
         - Auth
       requestBody:
@@ -72,65 +75,94 @@ paths:
               $ref: '#/components/schemas/RefreshRequest'
       responses:
         '200':
-          description: Token refreshed successfully
+          description: Токен успешно обновлен
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
-          description: Invalid or expired refresh token
+          description: Невалидный или истекший refresh token
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /auth/logout:
     post:
-      summary: Logout user
+      summary: Выход из системы
+      description: Инвалидация сессии пользователя
       tags:
         - Auth
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
       responses:
         '200':
-          description: Logout successful
+          description: Успешный выход
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /bookmarks:
     get:
-      summary: List all bookmarks
+      summary: Список закладок
+      description: Получить все закладки пользователя с опциональными фильтрами
       tags:
         - Bookmarks
       security:
         - BearerAuth: []
       parameters:
+        - name: collection_id
+          in: query
+          description: Фильтр по ID коллекции
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Фильтр по тегам
+          schema:
+            type: array
+            items:
+              type: string
+        - name: skip
+          in: query
+          description: Количество элементов для пропуска
+          schema:
+            type: integer
+            default: 0
         - name: page
           in: query
+          description: Номер страницы
           schema:
             type: integer
             default: 1
         - name: limit
           in: query
+          description: Количество элементов на странице
           schema:
             type: integer
-            default: 20
+            default: 10
       responses:
         '200':
-          description: List of bookmarks
+          description: Список закладок
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookmarkList'
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     post:
-      summary: Create a new bookmark
+      summary: Создать закладку
+      description: Создание новой закладки для текущего пользователя
       tags:
         - Bookmarks
       security:
@@ -143,21 +175,22 @@ paths:
               $ref: '#/components/schemas/CreateBookmarkRequest'
       responses:
         '200':
-          description: Bookmark created successfully
+          description: Закладка успешно создана
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Bookmark'
+                $ref: '#/components/schemas/CreateBookmarkResponse'
         '400':
-          description: Invalid request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /bookmarks/{id}:
     get:
-      summary: Get a bookmark by ID
+      summary: Получить закладку
+      description: Получить закладку по ID
       tags:
         - Bookmarks
       security:
@@ -170,22 +203,23 @@ paths:
             type: string
       responses:
         '200':
-          description: Bookmark details
+          description: Детали закладки
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Bookmark'
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '404':
-          description: Bookmark not found
+          description: Закладка не найдена
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     put:
-      summary: Update a bookmark
+      summary: Обновить закладку
+      description: Обновление существующей закладки
       tags:
         - Bookmarks
       security:
@@ -204,22 +238,19 @@ paths:
               $ref: '#/components/schemas/UpdateBookmarkRequest'
       responses:
         '200':
-          description: Bookmark updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Bookmark'
+          description: Закладка успешно обновлена
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '404':
-          description: Bookmark not found
+          description: Закладка не найдена
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     delete:
-      summary: Delete a bookmark
+      summary: Удалить закладку
+      description: Удаление закладки
       tags:
         - Bookmarks
       security:
@@ -232,48 +263,39 @@ paths:
             type: string
       responses:
         '200':
-          description: Bookmark deleted successfully
+          description: Закладка успешно удалена
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '404':
-          description: Bookmark not found
+          description: Закладка не найдена
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /collections:
     get:
-      summary: List all collections
+      summary: Список коллекций
+      description: Получить все коллекции текущего пользователя
       tags:
         - Collections
       security:
         - BearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
       responses:
         '200':
-          description: List of collections
+          description: Список коллекций
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CollectionList'
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     post:
-      summary: Create a new collection
+      summary: Создать коллекцию
+      description: Создание новой коллекции для текущего пользователя
       tags:
         - Collections
       security:
@@ -286,21 +308,22 @@ paths:
               $ref: '#/components/schemas/CreateCollectionRequest'
       responses:
         '200':
-          description: Collection created successfully
+          description: Коллекция успешно создана
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Collection'
+                $ref: '#/components/schemas/CreateCollectionResponse'
         '400':
-          description: Invalid request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /collections/{id}:
     get:
-      summary: Get a collection by ID
+      summary: Получить коллекцию
+      description: Получить коллекцию по ID
       tags:
         - Collections
       security:
@@ -313,22 +336,23 @@ paths:
             type: string
       responses:
         '200':
-          description: Collection details
+          description: Детали коллекции
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collection'
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '404':
-          description: Collection not found
+          description: Коллекция не найдена
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     put:
-      summary: Update a collection
+      summary: Обновить коллекцию
+      description: Обновление существующей коллекции
       tags:
         - Collections
       security:
@@ -347,22 +371,19 @@ paths:
               $ref: '#/components/schemas/UpdateCollectionRequest'
       responses:
         '200':
-          description: Collection updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Collection'
+          description: Коллекция успешно обновлена
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '404':
-          description: Collection not found
+          description: Коллекция не найдена
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     delete:
-      summary: Delete a collection
+      summary: Удалить коллекцию
+      description: Удаление коллекции
       tags:
         - Collections
       security:
@@ -375,35 +396,37 @@ paths:
             type: string
       responses:
         '200':
-          description: Collection deleted successfully
+          description: Коллекция успешно удалена
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '404':
-          description: Collection not found
+          description: Коллекция не найдена
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
   /profile/me:
     get:
-      summary: Get current user profile
+      summary: Получить профиль
+      description: Получить профиль текущего пользователя
       tags:
         - Profile
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: User profile
+          description: Профиль пользователя
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/Profile'
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     put:
-      summary: Update current user profile
+      summary: Обновить профиль
+      description: Обновление профиля текущего пользователя
       tags:
         - Profile
       security:
@@ -413,55 +436,57 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserRequest'
+              $ref: '#/components/schemas/UpdateProfileRequest'
       responses:
         '200':
-          description: Profile updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+          description: Профиль успешно обновлен
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
+
+    delete:
+      summary: Удалить пользователя
+      description: Удаление пользователя
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Профиль успешно удален
+        '401':
+          description: Не авторизован
+        '500':
+          description: Внутренняя ошибка сервера
 
   /tags:
     get:
-      summary: List all tags
+      summary: Список тегов
+      description: Получить все теги текущего пользователя
       tags:
         - Tags
       security:
         - BearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
       responses:
         '200':
-          description: List of tags
+          description: Список тегов
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TagList'
         '400':
-          description: Bad request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
 
     post:
-      summary: Create a new tag
+      summary: Создать тег
+      description: Создание нового тега для текущего пользователя
       tags:
         - Tags
       security:
@@ -474,17 +499,72 @@ paths:
               $ref: '#/components/schemas/CreateTagRequest'
       responses:
         '200':
-          description: Tag created successfully
+          description: Тег успешно создан
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
+                $ref: '#/components/schemas/CreateTagResponse'
         '400':
-          description: Invalid request
+          description: Некорректный запрос
         '401':
-          description: Unauthorized
+          description: Не авторизован
         '500':
-          description: Internal server error
+          description: Внутренняя ошибка сервера
+
+  /tags/{id}:
+    put:
+      summary: Переименовать тег
+      description: Переименование тега
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameTagRequest'
+      responses:
+        '200':
+          description: Тег успешно переименован
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Не авторизован
+        '404':
+          description: Тег не найден
+        '500':
+          description: Внутренняя ошибка сервера
+
+    delete:
+      summary: Удалить тег
+      description: Удаление тега и всех связей с закладками
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Тег успешно удален
+        '401':
+          description: Не авторизован
+        '404':
+          description: Тег не найден
+        '500':
+          description: Внутренняя ошибка сервера
 
 components:
   securitySchemes:
@@ -495,55 +575,404 @@ components:
 
   schemas:
     RegisterRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: password123
 
     LoginRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: password123
 
     RefreshRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    LogoutRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
     AuthResponse:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refresh_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
     CreateBookmarkRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - url
+        - title
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://example.com/article
+        title:
+          type: string
+          example: Интересная статья
+        description:
+          type: string
+          example: Описание закладки
+        collection_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        tag_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Массив ID тегов
+          example: ["123e4567-e89b-12d3-a456-426614174001", "123e4567-e89b-12d3-a456-426614174002"]
+
+    CreateBookmarkResponse:
+      type: object
+      properties:
+        bookmark_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
 
     UpdateBookmarkRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - url
+        - title
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://example.com/article
+        title:
+          type: string
+          example: Обновленное название
+        description:
+          type: string
+          example: Обновленное описание
+        collection_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        tag_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Массив ID тегов
+          example: ["123e4567-e89b-12d3-a456-426614174001", "123e4567-e89b-12d3-a456-426614174002"]
 
     Bookmark:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор закладки
+          example: 123e4567-e89b-12d3-a456-426614174000
+        user_id:
+          type: string
+          format: uuid
+          description: Владелец закладки
+          example: 123e4567-e89b-12d3-a456-426614174000
+        url:
+          type: string
+          format: uri
+          description: Сохраненный URL
+          example: https://example.com/article
+        title:
+          type: string
+          description: Название закладки
+          example: Интересная статья
+        description:
+          type: string
+          nullable: true
+          description: Описание/заметка
+          example: Описание закладки
+        collection_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Коллекция
+          example: 123e4567-e89b-12d3-a456-426614174000
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Массив ID тегов
+          example: ["123e4567-e89b-12d3-a456-426614174001", "123e4567-e89b-12d3-a456-426614174002"]
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+          example: "2024-01-15T10:30:00Z"
 
     BookmarkList:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        bookmarks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bookmark'
+        total_count:
+          type: integer
+          example: 42
 
     CreateCollectionRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+          example: Работа
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          example: "#FF5733"
+
+    CreateCollectionResponse:
+      type: object
+      properties:
+        collection_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
 
     UpdateCollectionRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+          example: Личное
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          example: "#3498DB"
 
     Collection:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор коллекции
+          example: 123e4567-e89b-12d3-a456-426614174000
+        user_id:
+          type: string
+          format: uuid
+          description: Владелец коллекции
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: Название коллекции
+          example: Работа
+        color:
+          type: string
+          description: Цвет в формате hex
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          example: "#FF5733"
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+          example: "2024-01-15T10:30:00Z"
 
     CollectionList:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        collections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+        total_count:
+          type: integer
+          example: 5
 
     User:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор пользователя
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          type: string
+          format: email
+          description: Email адрес для входа
+          example: user@example.com
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания аккаунта
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+          example: "2024-01-15T10:30:00Z"
+        timezone:
+          type: string
+          description: Временная зона (IANA формат)
+          example: Europe/Moscow
 
-    UpdateUserRequest:
-      $ref: '#/components/schemas/Object'
+    Profile:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        display_name:
+          type: string
+          example: Иван Иванов
+        avatar_url:
+          type: string
+          format: uri
+          example: https://example.com/avatars/user.jpg
+        bio:
+          type: string
+          example: Разработчик из Москвы
+        timezone:
+          type: string
+          example: Europe/Moscow
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          example: Иван Иванов
+        avatar_url:
+          type: string
+          format: uri
+          example: https://example.com/avatars/user.jpg
+        bio:
+          type: string
+          example: Разработчик из Москвы
+        timezone:
+          type: string
+          example: Europe/Moscow
 
     CreateTagRequest:
-      $ref: '#/components/schemas/Object'
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: golang
+
+    CreateTagResponse:
+      type: object
+      properties:
+        tag_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+
+    RenameTagRequest:
+      type: object
+      required:
+        - new_name
+      properties:
+        new_name:
+          type: string
+          example: go-lang
 
     Tag:
-      $ref: '#/components/schemas/Object'
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор тега
+          example: 123e4567-e89b-12d3-a456-426614174000
+        user_id:
+          type: string
+          format: uuid
+          description: Владелец тега
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: Название тега
+          example: golang
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2024-01-15T10:30:00Z"
 
     TagList:
-      $ref: '#/components/schemas/Object'
-
-    Object:
       type: object
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        total_count:
+          type: integer
+          example: 15

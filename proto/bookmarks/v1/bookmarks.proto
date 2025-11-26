@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package minihub.bookmark.v1;
+
+option go_package = "github.com/kiespetch/minihub/gen/go/bookmark/v1;bookmarkv1";
+
+import "google/protobuf/timestamp.proto";
+
+message Bookmark {
+  string id = 1;
+  string user_id = 2;
+  string url = 3;
+  string title = 4;
+  optional string description = 5;
+  optional string collection_id = 6;
+  repeated string tag_ids = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message CreateBookmarkRequest {
+  string user_id = 1;
+  string url = 2;
+  string title = 3;
+  optional string description = 4;
+  optional string collection_id = 5;
+  repeated string tag_ids = 6;
+}
+
+message CreateBookmarkResponse {
+  string bookmark_id = 1;
+}
+
+message GetBookmarkRequest {
+  string bookmark_id = 1;
+  string user_id = 2;
+}
+
+message GetBookmarkResponse {
+  Bookmark bookmark = 1;
+}
+
+message ListBookmarksRequest {
+  string user_id = 1;
+  optional string collection_id = 2;
+  repeated string tag_ids = 3;
+  int32 skip = 4;
+  int32 page = 5;
+  int32 limit = 6;
+}
+
+message ListBookmarksResponse {
+  repeated Bookmark bookmarks = 1;
+  int32 total_count = 2;
+}
+
+message UpdateBookmarkRequest {
+  string bookmark_id = 1;
+  string user_id = 2;
+  string url = 3;
+  string title = 4;
+  optional string description = 5;
+  optional string collection_id = 6;
+  repeated string tag_ids = 7;
+}
+
+message UpdateBookmarkResponse {
+}
+
+message DeleteBookmarkRequest {
+  string bookmark_id = 1;
+  string user_id = 2;
+}
+
+message DeleteBookmarkResponse {
+}
+
+service BookmarkService {
+  rpc CreateBookmark(CreateBookmarkRequest) returns (CreateBookmarkResponse);
+  rpc GetBookmark(GetBookmarkRequest) returns (GetBookmarkResponse);
+  rpc ListBookmarks(ListBookmarksRequest) returns (ListBookmarksResponse);
+  rpc UpdateBookmark(UpdateBookmarkRequest) returns (UpdateBookmarkResponse);
+  rpc DeleteBookmark(DeleteBookmarkRequest) returns (DeleteBookmarkResponse);
+}
